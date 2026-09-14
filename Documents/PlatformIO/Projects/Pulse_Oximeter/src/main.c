@@ -64,7 +64,8 @@ void app_main() {
             currIr = get_ir(&cb, &cory);
             next_sample(&cb, &cory);
             printf("Current Ir: %lu", currIr);
-
+            MAXIM_readTemp(&cory);
+            printf("Current Temp: %f", get_tempC(&cory));
         }
         //RTOS
         vTaskDelay(pdMS_TO_TICKS(20));

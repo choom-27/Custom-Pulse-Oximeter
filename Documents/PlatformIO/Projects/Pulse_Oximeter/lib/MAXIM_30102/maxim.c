@@ -144,8 +144,12 @@ void clear_Fifo()
 esp_err_t MAXIM_readTemp( MAX_30102 *dev)
 {
     //Need bit mask for tempFrac
-    uint8_t tempInt;
-    uint8_t tempFrac;
+    uint8_t tempInt = 0;
+    uint8_t tempFrac = 0;
+    
+    //Clear the temperature enable bit everytime 
+    MAXIM_writeRegister(MAXIM_REG_TEMP_CONFIG, 0x01);
+
     //In order to read the temp properly, we need to add the integer temp register to the fraction temperature register.
     esp_err_t statusInt = MAXIM_readRegister(MAXIM_REG_TEMP_INTEGER, &tempInt, 1);
     esp_err_t statusFrac = MAXIM_readRegister(MAXIM_REG_TEMP_FRACTION, &tempFrac, 1);
@@ -154,7 +158,7 @@ esp_err_t MAXIM_readTemp( MAX_30102 *dev)
     //Dont forget temp enable
     int8_t signedTemp = (int8_t)tempInt;
     uint8_t newTempFrac = tempFrac & 0x0F;
-   // for (uint8_t i = 0; i < )
+
     dev->temp_C = signedTemp + (newTempFrac * .0625);
 
     if (statusInt != ESP_OK) return statusInt; 
@@ -168,13 +172,13 @@ void MAXIM_readSamples(MAX_30102 *dev, circular_buff *c)
     uint8_t readFifo;
     uint8_t writeFifo;
     uint8_t fifoData;
-
+    
     //Then, we need to READ the FIFO_wr_PTR
     MAXIM_readRegister(MAXIM_REG_FIFO_WR_PTR, &writeFifo, 1);
     MAXIM_readRegister(MAXIM_REG_FIFO_RD_PTR, &readFifo, 1);
 
     int8_t num_available_samples = (int8_t)writeFifo - (int8_t)readFifo;
-    //roll over samples
+    //rollover samples
     if (num_available_samples < 0)
     {
         num_available_samples += 32;
@@ -268,7 +272,7 @@ void next_sample(circular_buff *c, MAX_30102 *dev)  //Why do we make these value
         c->bufferFull = false;
     }
 }
-//We need two getters - one for red and one for ir
+//We need three getters - one for red and one for ir, and one for temp
 uint32_t get_ir(circular_buff *c, MAX_30102 *dev)  //Why do we make these values pointers but not the write to buffer? - because without this they would be equal to local copies and not actually modify the caller value
 {
     return dev->ir_led[c->tail];  //value of ir_sample
@@ -276,6 +280,10 @@ uint32_t get_ir(circular_buff *c, MAX_30102 *dev)  //Why do we make these values
 uint32_t get_red(circular_buff *c, MAX_30102 *dev)  //Why do we make these values pointers but not the write to buffer? - because without this they would be equal to local copies and not actually modify the caller value
 {
     return dev->red_led[c->tail];  //value of ir_sample
+}
+float get_tempC( MAX_30102 *dev)
+{
+    return dev->temp_C;
 }
 
 

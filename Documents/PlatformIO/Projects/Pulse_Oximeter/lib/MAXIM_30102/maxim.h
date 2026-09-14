@@ -101,3 +101,4 @@ void next_sample(circular_buff *c, MAX_30102 *dev);
 */
 uint32_t get_ir(circular_buff *c, MAX_30102 *dev);
 uint32_t get_red(circular_buff *c, MAX_30102 *dev);
+float get_tempC( MAX_30102 *dev);
